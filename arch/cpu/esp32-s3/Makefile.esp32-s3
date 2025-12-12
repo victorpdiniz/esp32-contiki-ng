@@ -1,0 +1,13 @@
+### CPU configuration
+CONTIKI_CPU_DIRS = . dev
+CONTIKI_CPU_SOURCEFILES += clock.c rtimer-arch.c watchdog.c
+
+### Architecture configuration
+CONTIKI_ARCH = xtensa
+
+### CPU-specific definitions
+CFLAGS += -DESP32_S3
+CFLAGS += -DCONFIG_IDF_TARGET_ESP32S3
+
+### Build sourcefiles
+CONTIKI_SOURCEFILES += $(CONTIKI_CPU_SOURCEFILES)

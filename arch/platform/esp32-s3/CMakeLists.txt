@@ -1,0 +1,38 @@
+idf_component_register(
+    SRCS 
+        "platform.c"
+        "../../cpu/esp32-s3/clock.c"
+        "../../cpu/esp32-s3/rtimer-arch.c"
+        "../../cpu/esp32-s3/watchdog.c"
+        "../../../os/sys/process.c"
+        "../../../os/sys/etimer.c"
+        "../../../os/sys/timer.c"
+        "../../../os/sys/ctimer.c"
+        "../../../os/sys/energest.c"
+        "../../../os/sys/rtimer.c"
+../../../os/sys/stack-check.c
+        "../../../os/lib/memb.c"
+        "../../../os/lib/list.c"
+        "../../../os/lib/random.c"
+    INCLUDE_DIRS 
+        "."
+        "../../cpu/esp32-s3"
+        "../../../os"
+        "../../../os/sys"
+        "../../../os/lib"
+        "../../../os/dev"
+        "../../../os/net"
+        "../../../os/net/nullnet"
+    REQUIRES 
+        nvs_flash
+        esp_timer
+        driver
+    PRIV_REQUIRES
+        spi_flash
+        esp_system
+)
+
+target_compile_definitions(${COMPONENT_LIB} PUBLIC
+    CONTIKI=1
+    CONTIKI_TARGET_ESP32S3=1
+)

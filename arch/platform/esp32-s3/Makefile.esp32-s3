@@ -1,0 +1,41 @@
+ifndef CONTIKI
+  $(error CONTIKI not defined! You must specify where CONTIKI resides!)
+endif
+
+### Platform configuration
+CONTIKI_TARGET_DIRS = . dev
+CONTIKI_TARGET_SOURCEFILES += platform.c
+
+### ESP-IDF Integration
+IDF_PATH ?= $(HOME)/esp/v5.5.1/esp-idf
+IDF_TARGET = esp32s3
+
+### Use ESP-IDF build system
+### This is a hybrid approach - we'll use idf.py for building
+.PHONY: all clean upload monitor
+
+all:
+	@echo "Building with ESP-IDF..."
+	cd $(CONTIKI)/arch/platform/$(TARGET) && idf.py build
+
+clean:
+	@echo "Cleaning ESP-IDF build..."
+	cd $(CONTIKI)/arch/platform/$(TARGET) && idf.py fullclean
+
+upload: all
+	@echo "Flashing to ESP32-S3..."
+	cd $(CONTIKI)/arch/platform/$(TARGET) && idf.py -p $(ESPTOOL_PORT) flash
+
+monitor:
+	@echo "Starting serial monitor..."
+	cd $(CONTIKI)/arch/platform/$(TARGET) && idf.py -p $(ESPTOOL_PORT) monitor
+
+### Upload configuration
+ESPTOOL_PORT ?= /dev/ttyUSB0
+
+### Build sourcefiles
+CONTIKI_SOURCEFILES += $(CONTIKI_TARGET_SOURCEFILES)
+
+### Define the CPU directory
+CONTIKI_CPU = $(CONTIKI_NG_RELOC_CPU_DIR)/esp32-s3
+include $(CONTIKI_CPU)/Makefile.esp32-s3
