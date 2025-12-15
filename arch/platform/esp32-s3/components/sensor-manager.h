@@ -30,79 +30,68 @@
 
 /**
  * \file
- *         Hello World example for ESP32-S3
+ *         ESP32-S3 Sensor Manager Header
  * \author
  *         Contiki-NG ESP32-S3 Port
+ * 
+ * \brief Sensor reading using FreeRTOS task with Contiki integration
  */
 
+#ifndef SENSOR_MANAGER_H_
+#define SENSOR_MANAGER_H_
+
 #include "contiki.h"
-#include "sys/etimer.h"
-#include "sys/clock.h"
-
-#include <stdio.h>
-
-/* ESP-IDF includes for logging and GPIO */
-#include "esp_log.h"
-#include "driver/gpio.h"
-
-static const char *TAG = "Hello-World";
-
-/* LED GPIO pin - Heltec WiFi LoRa 32 V3 has LED on GPIO 35 */
-#define LED_GPIO  GPIO_NUM_35
+#include <stdint.h>
 
 /*---------------------------------------------------------------------------*/
-PROCESS(hello_world_process, "Hello World process");
-AUTOSTART_PROCESSES(&hello_world_process);
+/* Sensor types */
+typedef enum {
+  SENSOR_TYPE_TEMPERATURE,
+  SENSOR_TYPE_HUMIDITY,
+  SENSOR_TYPE_PRESSURE,
+  SENSOR_TYPE_LIGHT,
+  SENSOR_TYPE_MOTION
+} sensor_type_t;
 
-/* Export autostart_processes for platform.c */
-extern struct process * const autostart_processes[];
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(hello_world_process, ev, data)
-{
-  static struct etimer timer;
-  static uint8_t led_state = 0;
+/* Sensor data structure */
+typedef struct {
+  sensor_type_t type;
+  float value;
+  uint32_t timestamp;
+} sensor_data_t;
 
-  PROCESS_BEGIN();
-
-  ESP_LOGI(TAG, "Hello, World from ESP32-S3!");
-  ESP_LOGI(TAG, "Contiki-NG is running successfully!");
-  
-  /* Reset GPIO to default state first */
-  gpio_reset_pin(LED_GPIO);
-  
-  /* Configure LED GPIO as output */
-  gpio_config_t io_conf = {
-    .intr_type = GPIO_INTR_DISABLE,
-    .mode = GPIO_MODE_OUTPUT,
-    .pin_bit_mask = (1ULL << LED_GPIO),
-    .pull_down_en = GPIO_PULLDOWN_DISABLE,
-    .pull_up_en = GPIO_PULLUP_DISABLE
-  };
-  
-  esp_err_t ret = gpio_config(&io_conf);
-  if (ret == ESP_OK) {
-    ESP_LOGI(TAG, "LED configured on GPIO %d - SUCCESS", LED_GPIO);
-    gpio_set_level(LED_GPIO, 0);
-    ESP_LOGI(TAG, "LED initial state: OFF");
-  } else {
-    ESP_LOGE(TAG, "Failed to configure GPIO %d, error: %d", LED_GPIO, ret);
-  }
-
-  /* Set a periodic timer that expires every second */
-  etimer_set(&timer, CLOCK_SECOND);
-
-  while(1) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
-
-    /* Toggle LED state */
-    led_state = !led_state;
-    gpio_set_level(LED_GPIO, led_state);
-
-    ESP_LOGI(TAG, "Tick! Uptime: %lu seconds, LED: %s", 
-             clock_seconds(), led_state ? "ON" : "OFF");
-    
-    /* Reset the timer */
-    etimer_reset(&timer);
-  }  PROCESS_END();
-}
 /*---------------------------------------------------------------------------*/
+/* Process events */
+extern process_event_t sensor_event_data_ready;
+
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Initialize sensor manager
+ * 
+ * Creates FreeRTOS task for sensor reading
+ */
+void sensor_manager_init(void);
+
+/**
+ * \brief Read sensor value
+ * 
+ * \param type Sensor type to read
+ * \param value Pointer to store the value
+ * 
+ * \return 0 on success, -1 on failure
+ */
+int sensor_manager_read(sensor_type_t type, float *value);
+
+/**
+ * \brief Get last sensor reading
+ * 
+ * \param type Sensor type
+ * \param data Pointer to sensor_data_t structure
+ * 
+ * \return 0 on success, -1 on failure
+ */
+int sensor_manager_get_last_reading(sensor_type_t type, sensor_data_t *data);
+
+/*---------------------------------------------------------------------------*/
+#endif /* SENSOR_MANAGER_H_ */

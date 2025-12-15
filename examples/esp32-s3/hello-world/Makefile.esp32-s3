@@ -1,0 +1,56 @@
+# Contiki-NG ESP32-S3 Build Wrapper
+# This provides Contiki-style commands that wrap ESP-IDF's idf.py
+CONTIKI_PROJECT = hello-world
+CONTIKI = ../../../..
+
+# Default target
+all: build
+
+# ESP-IDF wrapper targets
+.PHONY: all build flash monitor clean menuconfig
+.PHONY: idf-build idf-flash idf-monitor idf-clean idf-menuconfig
+
+idf-build:
+	@echo "Building with ESP-IDF..."
+	idf.py build
+
+idf-flash:
+	@echo "Flashing to ESP32-S3..."
+	idf.py flash
+
+idf-monitor:
+	@echo "Starting serial monitor..."
+	idf.py monitor
+
+idf-clean:
+	@echo "Cleaning ESP-IDF build..."
+	idf.py fullclean
+
+idf-menuconfig:
+	@echo "Opening menuconfig..."
+	idf.py menuconfig
+
+# Override default targets to use ESP-IDF
+build: idf-build
+flash: idf-flash
+monitor: idf-monitor
+clean: idf-clean
+
+# Help target
+help::
+	@echo "ESP32-S3 Contiki-NG Build System"
+	@echo ""
+	@echo "Quick commands:"
+	@echo "  make build          - Build the project"
+	@echo "  make flash          - Flash to device"
+	@echo "  make monitor        - Open serial monitor"
+	@echo "  make flash monitor  - Flash and monitor"
+	@echo "  make clean          - Clean build files"
+	@echo ""
+	@echo "Configuration:"
+	@echo "  make menuconfig     - ESP-IDF configuration"
+	@echo ""
+	@echo "Low-level ESP-IDF:"
+	@echo "  idf.py set-target esp32s3"
+	@echo "  idf.py build"
+	@echo "  idf.py -p PORT flash monitor"

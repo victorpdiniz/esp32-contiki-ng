@@ -1,6 +1,10 @@
 idf_component_register(
     SRCS 
         "platform.c"
+        "dev/leds-arch.c"
+        "components/freertos-bridge.c"
+        "components/wifi-manager.c"
+        "components/sensor-manager.c"
         "../../cpu/esp32-s3/clock.c"
         "../../cpu/esp32-s3/rtimer-arch.c"
         "../../cpu/esp32-s3/watchdog.c"
@@ -10,12 +14,15 @@ idf_component_register(
         "../../../os/sys/ctimer.c"
         "../../../os/sys/energest.c"
         "../../../os/sys/rtimer.c"
-../../../os/sys/stack-check.c
+        "../../../os/sys/stack-check.c"
+        "../../../os/dev/leds.c"
         "../../../os/lib/memb.c"
         "../../../os/lib/list.c"
         "../../../os/lib/random.c"
     INCLUDE_DIRS 
         "."
+        "dev"
+        "components"
         "../../cpu/esp32-s3"
         "../../../os"
         "../../../os/sys"
@@ -27,6 +34,9 @@ idf_component_register(
         nvs_flash
         esp_timer
         driver
+        esp_wifi
+        esp_netif
+        esp_event
     PRIV_REQUIRES
         spi_flash
         esp_system

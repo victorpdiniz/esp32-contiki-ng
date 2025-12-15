@@ -29,58 +29,50 @@
  */
 
 /**
- * \addtogroup esp32-s3-platform
- * @{
- *
  * \file
- *         Contiki configuration for ESP32-S3 platform
+ *         LED driver for ESP32-S3 platform
  * \author
  *         Contiki-NG ESP32-S3 Port
  */
 
-#ifndef CONTIKI_CONF_H_
-#define CONTIKI_CONF_H_
+#ifndef LEDS_ARCH_H_
+#define LEDS_ARCH_H_
 
-#include <stdint.h>
-#include <inttypes.h>
+#include "contiki.h"
 
-/*---------------------------------------------------------------------------*/
-/* Include platform-specific configuration */
-#include "esp32-s3-conf.h"
-
-/*---------------------------------------------------------------------------*/
-/* Compiler configuration */
-#define CCIF
-#define CLIF
-
-/*---------------------------------------------------------------------------*/
-/* Log configuration */
-#ifndef LOG_CONF_LEVEL_MAIN
-#define LOG_CONF_LEVEL_MAIN                 LOG_LEVEL_INFO
+/* Platform-specific LED definitions */
+#ifdef PLATFORM_CONF_LEDS_NUM
+#define LEDS_NUM  PLATFORM_CONF_LEDS_NUM
+#else
+#define LEDS_NUM  1
 #endif
 
-/*---------------------------------------------------------------------------*/
-/* Clock and timer configuration */
-#define CLOCK_CONF_SECOND                   128
+/* LED bit masks - standard Contiki API */
+#define LEDS_GREEN    1
+#define LEDS_YELLOW   2
+#define LEDS_RED      4
+#define LEDS_BLUE     8
 
-/* Rtimer configuration */
-#define RTIMER_CONF_CLOCK_SIZE              4
-typedef uint32_t rtimer_clock_t;
-#define RTIMER_CLOCK_DIFF(a, b)             ((int32_t)((a) - (b)))
+/* Alias for single LED boards */
+#define LEDS_LED1     LEDS_GREEN
 
-/*---------------------------------------------------------------------------*/
-/* LED configuration - Use legacy API with bitmask */
-#define LEDS_CONF_LEGACY_API                1
-#define LEDS_CONF_LED1                      1  /* Bitmask: bit 0 */
-#define LEDS_CONF_ALL                       1  /* Single LED board */
-
-/*---------------------------------------------------------------------------*/
-/* Network configuration - Minimal for now */
-#define NETSTACK_CONF_NETWORK               nullnet_driver
-
-/*---------------------------------------------------------------------------*/
-#endif /* CONTIKI_CONF_H_ */
+#define LEDS_ALL      (LEDS_GREEN | LEDS_YELLOW | LEDS_RED | LEDS_BLUE)
 
 /**
- * @}
+ * \brief Initialize the LED driver
  */
+void leds_arch_init(void);
+
+/**
+ * \brief Get current LED state
+ * \return Bitmask of currently lit LEDs
+ */
+unsigned char leds_arch_get(void);
+
+/**
+ * \brief Set LED state
+ * \param leds Bitmask of LEDs to turn on
+ */
+void leds_arch_set(unsigned char leds);
+
+#endif /* LEDS_ARCH_H_ */

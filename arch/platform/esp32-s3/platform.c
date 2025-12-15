@@ -44,6 +44,7 @@
 #include "sys/rtimer.h"
 #include "sys/autostart.h"
 #include "dev/watchdog.h"
+#include "dev/leds.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -56,6 +57,14 @@
 #include "nvs_flash.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+/* Platform-specific modules */
+#include "freertos-bridge.h"
+#include "wifi-manager.h"
+#include "sensor-manager.h"
+
+/* Forward declaration for bridge function */
+extern void freertos_bridge_process_events(void);
 
 static const char *TAG = "Contiki-NG";
 
@@ -97,6 +106,16 @@ platform_init_stage_two(void)
            chip_info.revision,
            flash_size / (1024 * 1024),
            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
+  
+  /* Initialize FreeRTOS bridge */
+  freertos_bridge_init();
+  ESP_LOGI(TAG, "FreeRTOS-Contiki bridge initialized");
+  
+  /* Initialize WiFi manager */
+  wifi_manager_init();
+  
+  /* Initialize sensor manager */
+  sensor_manager_init();
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -130,6 +149,7 @@ contiki_ng_task(void *pvParameters)
   process_start(&etimer_process, NULL);
   ctimer_init();
   watchdog_init();
+  leds_init();
 
   /* Platform initialization stage two */
   platform_init_stage_two();
@@ -146,6 +166,10 @@ contiki_ng_task(void *pvParameters)
   while(1) {
     uint8_t r;
     do {
+      /* Process bridge events from FreeRTOS tasks */
+      freertos_bridge_process_events();
+      
+      /* Run Contiki processes */
       r = process_run();
       watchdog_periodic();
     } while(r > 0);

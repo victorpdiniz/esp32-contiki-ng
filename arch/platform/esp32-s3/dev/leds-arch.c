@@ -29,58 +29,69 @@
  */
 
 /**
- * \addtogroup esp32-s3-platform
- * @{
- *
  * \file
- *         Contiki configuration for ESP32-S3 platform
+ *         LED driver implementation for ESP32-S3
  * \author
  *         Contiki-NG ESP32-S3 Port
  */
 
-#ifndef CONTIKI_CONF_H_
-#define CONTIKI_CONF_H_
+#include "dev/leds-arch.h"
+#include "driver/gpio.h"
+#include "esp_log.h"
 
-#include <stdint.h>
-#include <inttypes.h>
+static const char *TAG = "leds-arch";
 
-/*---------------------------------------------------------------------------*/
-/* Include platform-specific configuration */
-#include "esp32-s3-conf.h"
-
-/*---------------------------------------------------------------------------*/
-/* Compiler configuration */
-#define CCIF
-#define CLIF
-
-/*---------------------------------------------------------------------------*/
-/* Log configuration */
-#ifndef LOG_CONF_LEVEL_MAIN
-#define LOG_CONF_LEVEL_MAIN                 LOG_LEVEL_INFO
+/* Platform-specific GPIO mapping */
+#ifndef PLATFORM_CONF_LED1_PIN
+#define LED1_GPIO  35  /* Heltec WiFi LoRa 32 V3 default */
+#else
+#define LED1_GPIO  PLATFORM_CONF_LED1_PIN
 #endif
 
-/*---------------------------------------------------------------------------*/
-/* Clock and timer configuration */
-#define CLOCK_CONF_SECOND                   128
+/* Some boards use inverted logic (LED on when GPIO LOW) */
+#ifndef PLATFORM_CONF_LED_INVERTED
+#define LED_INVERTED  1  /* Heltec boards typically use inverted logic */
+#else
+#define LED_INVERTED  PLATFORM_CONF_LED_INVERTED
+#endif
 
-/* Rtimer configuration */
-#define RTIMER_CONF_CLOCK_SIZE              4
-typedef uint32_t rtimer_clock_t;
-#define RTIMER_CLOCK_DIFF(a, b)             ((int32_t)((a) - (b)))
-
-/*---------------------------------------------------------------------------*/
-/* LED configuration - Use legacy API with bitmask */
-#define LEDS_CONF_LEGACY_API                1
-#define LEDS_CONF_LED1                      1  /* Bitmask: bit 0 */
-#define LEDS_CONF_ALL                       1  /* Single LED board */
+static unsigned char leds_state = 0;
 
 /*---------------------------------------------------------------------------*/
-/* Network configuration - Minimal for now */
-#define NETSTACK_CONF_NETWORK               nullnet_driver
-
+void
+leds_arch_init(void)
+{
+  gpio_config_t io_conf = {
+    .intr_type = GPIO_INTR_DISABLE,
+    .mode = GPIO_MODE_OUTPUT,
+    .pin_bit_mask = (1ULL << LED1_GPIO),
+    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+    .pull_up_en = GPIO_PULLUP_DISABLE
+  };
+  
+  gpio_config(&io_conf);
+  gpio_set_level(LED1_GPIO, LED_INVERTED ? 1 : 0);
+  leds_state = 0;
+  
+  ESP_LOGI(TAG, "LED driver initialized (GPIO %d)", LED1_GPIO);
+}
 /*---------------------------------------------------------------------------*/
-#endif /* CONTIKI_CONF_H_ */
-
-/**
- * @}
- */
+unsigned char
+leds_arch_get(void)
+{
+  return leds_state;
+}
+/*---------------------------------------------------------------------------*/
+void
+leds_arch_set(unsigned char leds)
+{
+  leds_state = leds;
+  
+  /* Set GPIO level based on LED state (inverted logic for Heltec boards) */
+  if(leds & 1) {
+    gpio_set_level(LED1_GPIO, LED_INVERTED ? 0 : 1);
+  } else {
+    gpio_set_level(LED1_GPIO, LED_INVERTED ? 1 : 0);
+  }
+}
+/*---------------------------------------------------------------------------*/
