@@ -54,9 +54,13 @@
 #define CLIF
 
 /*---------------------------------------------------------------------------*/
-/* Log configuration */
+/* Log configuration - Use ESP-IDF logging, avoid conflict with ESP-IDF */
+#ifndef __ASSEMBLER__
+/* ESP-IDF includes must come after all defines to avoid LOG_LEVEL conflict */
+#endif
+
 #ifndef LOG_CONF_LEVEL_MAIN
-#define LOG_CONF_LEVEL_MAIN                 LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAIN  3  /* INFO level */
 #endif
 
 /*---------------------------------------------------------------------------*/

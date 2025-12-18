@@ -61,6 +61,7 @@
 /* Platform-specific modules */
 #include "freertos-bridge.h"
 #include "wifi-manager.h"
+#include "udp-manager.h"
 #include "sensor-manager.h"
 
 /* Forward declaration for bridge function */
@@ -114,8 +115,11 @@ platform_init_stage_two(void)
   /* Initialize WiFi manager */
   wifi_manager_init();
   
+  /* Initialize UDP manager */
+  udp_manager_init();
+  
   /* Initialize sensor manager */
-  sensor_manager_init();
+  // sensor_manager_init(); // Not needed for all applications
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -149,7 +153,7 @@ contiki_ng_task(void *pvParameters)
   process_start(&etimer_process, NULL);
   ctimer_init();
   watchdog_init();
-  leds_init();
+  // leds_init(); // Optional - not needed for all applications
 
   /* Platform initialization stage two */
   platform_init_stage_two();
