@@ -57,8 +57,8 @@
 #include "sensor-manager.h"
 
 /* WiFi configuration - modify for your network */
-#define WIFI_SSID     "CINGUESTS"
-#define WIFI_PASSWORD "acessocin"
+#define WIFI_SSID     "DiscoveryNet_Andreia"
+#define WIFI_PASSWORD "cipc@es01"
 
 /*---------------------------------------------------------------------------*/
 /* Process declarations */

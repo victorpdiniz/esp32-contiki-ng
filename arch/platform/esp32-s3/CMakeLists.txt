@@ -3,7 +3,6 @@ idf_component_register(
         "platform.c"
         "dev/leds-arch.c"
         "components/freertos-bridge.c"
-        "components/wifi-manager.c"
         "components/sensor-manager.c"
         "../../cpu/esp32-s3/clock.c"
         "../../cpu/esp32-s3/rtimer-arch.c"

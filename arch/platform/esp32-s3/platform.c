@@ -60,12 +60,20 @@
 
 /* Platform-specific modules */
 #include "freertos-bridge.h"
-#include "wifi-manager.h"
-#include "udp-manager.h"
-#include "sensor-manager.h"
 
 /* Forward declaration for bridge function */
 extern void freertos_bridge_process_events(void);
+
+/* Weak symbols for optional manager initialization */
+/* Projects can override these by providing their own definitions */
+__attribute__((weak))
+void wifi_manager_init(void) { }
+
+__attribute__((weak))
+void udp_manager_init(void) { }
+
+__attribute__((weak))
+void sensor_manager_init(void) { }
 
 static const char *TAG = "Contiki-NG";
 
@@ -112,14 +120,12 @@ platform_init_stage_two(void)
   freertos_bridge_init();
   ESP_LOGI(TAG, "FreeRTOS-Contiki bridge initialized");
   
-  /* Initialize WiFi manager */
+  /* Initialize optional managers (weak symbols - can be overridden per project) */
   wifi_manager_init();
-  
-  /* Initialize UDP manager */
   udp_manager_init();
   
-  /* Initialize sensor manager */
-  // sensor_manager_init();
+  /* Initialize sensor manager (always available) */
+  sensor_manager_init();
 }
 /*---------------------------------------------------------------------------*/
 void
