@@ -201,4 +201,3 @@ PROCESS_THREAD(stats_process, ev, data)
   
   PROCESS_END();
 }
-
