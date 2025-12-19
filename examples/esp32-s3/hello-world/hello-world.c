@@ -53,6 +53,10 @@ PROCESS_THREAD(hello_world_process, ev, data)
   PROCESS_BEGIN();
 
   printf("Hello, world from ESP32-S3!\n");
+  
+  /* Initialize LEDs */
+  leds_init();
+  printf("LEDs initialized\n");
 
   /* Setup a periodic timer that expires after 1 second. */
   etimer_set(&timer, CLOCK_SECOND);
@@ -63,8 +67,8 @@ PROCESS_THREAD(hello_world_process, ev, data)
 
     /* Toggle the LED - use bitmask 1 for LED on GPIO 35 */
     leds_toggle(1);
-
-    printf("LED toggled! Uptime: %lu seconds\n", clock_seconds());
+    unsigned char led_state = leds_get();
+    printf("LED toggled! State: %d, Uptime: %lu seconds\n", led_state, clock_seconds());
 
     /* Reset the timer to fire again */
     etimer_reset(&timer);

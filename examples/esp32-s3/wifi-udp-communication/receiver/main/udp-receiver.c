@@ -19,15 +19,15 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 /* WiFi Configuration */
-#define WIFI_SSID "Victor"
-#define WIFI_PASSWORD "victor1234"
+#define WIFI_SSID "DiscoveryNet_Andreia"
+#define WIFI_PASSWORD "cipc@es01"
 
 /* Network Configuration */
 #define UDP_PORT 5678
 #define STATS_INTERVAL (30 * CLOCK_SECOND)
 #define MAX_CLIENTS 10
 
-/* Message structure - must match sender */
+/* Message structure */
 typedef struct {
   uint32_t seq_num;
   uint32_t timestamp;
@@ -39,7 +39,7 @@ typedef struct {
 
 /* Client tracking */
 typedef struct {
-  uint32_t addr;  /* IPv4 address as uint32_t */
+  uint32_t addr;
   uint32_t packets_received;
   uint32_t last_seq;
   uint32_t last_seen;
@@ -201,5 +201,4 @@ PROCESS_THREAD(stats_process, ev, data)
   
   PROCESS_END();
 }
-
 

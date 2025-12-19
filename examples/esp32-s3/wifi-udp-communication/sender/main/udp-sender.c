@@ -19,11 +19,11 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 /* WiFi Configuration */
-#define WIFI_SSID "Victor"
-#define WIFI_PASSWORD "victor1234"
+#define WIFI_SSID "DiscoveryNet_Andreia"
+#define WIFI_PASSWORD "cipc@es01"
 
 /* Network Configuration */
-#define RECEIVER_IP "192.168.43.93"
+#define RECEIVER_IP "10.0.0.107"
 #define UDP_PORT 5678
 #define SEND_INTERVAL (5 * CLOCK_SECOND)
 

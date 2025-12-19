@@ -119,7 +119,7 @@ platform_init_stage_two(void)
   udp_manager_init();
   
   /* Initialize sensor manager */
-  // sensor_manager_init(); // Not needed for all applications
+  // sensor_manager_init();
 }
 /*---------------------------------------------------------------------------*/
 void
