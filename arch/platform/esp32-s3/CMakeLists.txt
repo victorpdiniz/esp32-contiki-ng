@@ -41,7 +41,15 @@ idf_component_register(
         esp_system
 )
 
+# Compile definitions for Contiki-NG
 target_compile_definitions(${COMPONENT_LIB} PUBLIC
     CONTIKI=1
     CONTIKI_TARGET_ESP32S3=1
+)
+
+# Compile options - optimize for size and suppress protothread warnings
+target_compile_options(${COMPONENT_LIB} PRIVATE
+    -Wno-unused-function
+    -Wno-unused-variable
+    -Wno-misleading-indentation
 )

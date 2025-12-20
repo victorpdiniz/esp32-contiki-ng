@@ -1,0 +1,36 @@
+menu "Contiki-NG ESP32-S3 Configuration"
+
+    config BLINK_GPIO
+        int "LED GPIO Pin"
+        range 0 48
+        default 35
+        help
+            GPIO number for the LED (default: GPIO 35)
+
+    config CONTIKI_WIFI_ENABLE
+        bool "Enable WiFi Support"
+        default y
+        help
+            Enable WiFi support for Contiki-NG applications
+
+    config CONTIKI_SENSOR_ENABLE
+        bool "Enable Sensor Manager"
+        default y
+        help
+            Enable sensor manager for data collection
+
+    config CONTIKI_TASK_PRIORITY
+        int "Contiki Task Priority"
+        range 1 24
+        default 5
+        help
+            FreeRTOS priority for the Contiki-NG task (1-24)
+
+    config CONTIKI_TASK_STACK_SIZE
+        int "Contiki Task Stack Size"
+        range 4096 16384
+        default 8192
+        help
+            Stack size in bytes for the Contiki-NG task
+
+endmenu

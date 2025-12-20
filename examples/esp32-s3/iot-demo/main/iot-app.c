@@ -85,6 +85,9 @@ PROCESS_THREAD(led_blink_process, ev, data)
   PROCESS_BEGIN();
 
   printf("LED Blink Process started\n");
+  
+  /* Initialize LEDs */
+  leds_init();
 
   /* Blink LED every 1 second */
   etimer_set(&timer, CLOCK_SECOND);

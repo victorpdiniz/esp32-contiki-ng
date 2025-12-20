@@ -58,9 +58,6 @@
 #define LOG_MODULE "Contiki"
 #endif
 
-/* Default LOG_LEVEL if not defined */
-#ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_LEVEL_INFO
-#endif
+/* Note: LOG_LEVEL should be defined per-module, not globally */
 
 #endif /* SYS_LOG_H_ */

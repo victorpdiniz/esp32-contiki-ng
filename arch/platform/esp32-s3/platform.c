@@ -42,6 +42,7 @@
 #include "sys/platform.h"
 #include "sys/node-id.h"
 #include "sys/rtimer.h"
+#include "sys/etimer.h"
 #include "sys/autostart.h"
 #include "dev/watchdog.h"
 #include "dev/leds.h"
@@ -55,11 +56,13 @@
 #include "esp_flash.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "esp_task_wdt.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 /* Platform-specific modules */
 #include "freertos-bridge.h"
+#include "sdkconfig.h"  /* ESP-IDF configuration from menuconfig */
 
 /* Forward declaration for bridge function */
 extern void freertos_bridge_process_events(void);
@@ -77,8 +80,18 @@ void sensor_manager_init(void) { }
 
 static const char *TAG = "Contiki-NG";
 
+/* Configuration from Kconfig or defaults */
+#ifndef CONFIG_CONTIKI_TASK_STACK_SIZE
 #define CONTIKI_TASK_STACK_SIZE 8192
-#define CONTIKI_TASK_PRIORITY   5
+#else
+#define CONTIKI_TASK_STACK_SIZE CONFIG_CONTIKI_TASK_STACK_SIZE
+#endif
+
+#ifndef CONFIG_CONTIKI_TASK_PRIORITY
+#define CONTIKI_TASK_PRIORITY 5
+#else
+#define CONTIKI_TASK_PRIORITY CONFIG_CONTIKI_TASK_PRIORITY
+#endif
 
 /* External autostart array from main application */
 extern struct process * const autostart_processes[];
@@ -152,9 +165,13 @@ contiki_ng_task(void *pvParameters)
   /* Platform initialization stage one */
   platform_init_stage_one();
 
-  /* Initialize Contiki-NG */
+  /* Initialize Contiki-NG core */
   clock_init();
   rtimer_init();
+
+  /* Small delay to let system stabilize */
+  vTaskDelay(pdMS_TO_TICKS(10));
+
   process_init();
   process_start(&etimer_process, NULL);
   ctimer_init();
@@ -178,6 +195,11 @@ contiki_ng_task(void *pvParameters)
     do {
       /* Process bridge events from FreeRTOS tasks */
       freertos_bridge_process_events();
+      
+      /* Ensure etimer gets polled when timers are due */
+      if(etimer_pending() && etimer_next_expiration_time() <= clock_time()) {
+        etimer_request_poll();
+      }
       
       /* Run Contiki processes */
       r = process_run();

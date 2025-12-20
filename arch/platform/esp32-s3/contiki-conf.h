@@ -65,7 +65,9 @@
 
 /*---------------------------------------------------------------------------*/
 /* Clock and timer configuration */
-#define CLOCK_CONF_SECOND                   128
+#ifndef CLOCK_CONF_SECOND
+#define CLOCK_CONF_SECOND                   128   /* Contiki default ticks/sec */
+#endif
 
 /* Rtimer configuration */
 #define RTIMER_CONF_CLOCK_SIZE              4
@@ -82,8 +84,12 @@ typedef uint32_t rtimer_clock_t;
 /* Network configuration - Minimal for now */
 #define NETSTACK_CONF_NETWORK               nullnet_driver
 
-/*---------------------------------------------------------------------------*/
-#endif /* CONTIKI_CONF_H_ */
+/*---------------------------------------------------------------------------*//* Application overrides - include project-specific configuration last */
+#ifdef PROJECT_CONF_H
+#include PROJECT_CONF_H
+#endif
+
+/*---------------------------------------------------------------------------*/#endif /* CONTIKI_CONF_H_ */
 
 /**
  * @}

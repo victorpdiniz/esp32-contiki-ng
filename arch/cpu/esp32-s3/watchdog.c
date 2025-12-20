@@ -44,13 +44,19 @@
 /* ESP-IDF includes */
 #include "esp_task_wdt.h"
 #include "esp_system.h"
+#include "esp_log.h"
 
 /*---------------------------------------------------------------------------*/
 void
 watchdog_init(void)
 {
-  /* Subscribe Contiki-NG task to watchdog */
-  esp_task_wdt_add(NULL);
+  /* Subscribe current task to Task WDT for monitoring */
+  esp_err_t ret = esp_task_wdt_add(NULL);
+  if(ret == ESP_ERR_INVALID_ARG) {
+    /* Task already added, ignore */
+  } else if(ret != ESP_OK) {
+    ESP_LOGW("watchdog", "Failed to add task to WDT: %s", esp_err_to_name(ret));
+  }
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -63,7 +69,13 @@ void
 watchdog_periodic(void)
 {
   /* Reset the watchdog timer for this task */
-  esp_task_wdt_reset();
+  esp_err_t ret = esp_task_wdt_reset();
+  if(ret != ESP_OK && ret != ESP_ERR_INVALID_ARG) {
+    /* Log only if it's not an "already reset" or "task not subscribed" error */
+    if(ret != ESP_ERR_NOT_FOUND) {
+      ESP_LOGW("watchdog", "Failed to reset WDT: %s", esp_err_to_name(ret));
+    }
+  }
 }
 /*---------------------------------------------------------------------------*/
 void

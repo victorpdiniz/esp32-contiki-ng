@@ -48,12 +48,6 @@
 #define PLATFORM_NAME "esp32-s3"
 
 /*---------------------------------------------------------------------------*/
-/* Clock configuration */
-#ifndef CLOCK_CONF_SECOND
-#define CLOCK_CONF_SECOND 128
-#endif
-
-/*---------------------------------------------------------------------------*/
 /* UART configuration for console */
 #ifndef CONFIG_ESP_CONSOLE_UART_NUM
 #define CONFIG_ESP_CONSOLE_UART_NUM 0

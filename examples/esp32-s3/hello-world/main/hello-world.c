@@ -68,7 +68,8 @@ PROCESS_THREAD(hello_world_process, ev, data)
     /* Toggle the LED - use bitmask 1 for LED on GPIO 35 */
     leds_toggle(1);
     unsigned char led_state = leds_get();
-    printf("LED toggled! State: %d, Uptime: %lu seconds\n", led_state, clock_seconds());
+    printf("LED toggled! State: %d, Uptime: %lu seconds, Ticks: %llu\n", 
+           led_state, clock_seconds(), clock_time());
 
     /* Reset the timer to fire again */
     etimer_reset(&timer);

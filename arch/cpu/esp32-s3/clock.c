@@ -50,78 +50,42 @@
 
 /* ESP-IDF includes */
 #include "esp_timer.h"
-#include "esp_attr.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 /*---------------------------------------------------------------------------*/
-/* Number of ticks per second - Contiki-NG default is 128 */
-#ifndef CLOCK_CONF_SECOND
-#define CLOCK_CONF_SECOND 128
-#endif
+/* Boot time in microseconds */
+static uint64_t boot_us;
 
-/*---------------------------------------------------------------------------*/
-static volatile clock_time_t current_clock = 0;
-static volatile unsigned long current_seconds = 0;
-static unsigned int second_countdown = CLOCK_SECOND;
-static esp_timer_handle_t clock_timer_handle;
-
-/*---------------------------------------------------------------------------*/
-/**
- * \brief Timer callback for system clock
- */
-static void
-clock_timer_callback(void *arg)
-{
-  current_clock++;
-
-  if(etimer_pending()) {
-    etimer_request_poll();
-  }
-
-  if(--second_countdown == 0) {
-    current_seconds++;
-    second_countdown = CLOCK_SECOND;
-  }
-}
 /*---------------------------------------------------------------------------*/
 void
 clock_init(void)
 {
-  const esp_timer_create_args_t timer_args = {
-    .callback = &clock_timer_callback,
-    .arg = NULL,
-    .dispatch_method = ESP_TIMER_TASK,
-    .name = "contiki_clock"
-  };
-
-  current_clock = 0;
-  current_seconds = 0;
-  second_countdown = CLOCK_SECOND;
-
-  /* Create and start periodic timer */
-  esp_timer_create(&timer_args, &clock_timer_handle);
-  esp_timer_start_periodic(clock_timer_handle, 1000000 / CLOCK_SECOND);
+  boot_us = esp_timer_get_time();
 }
 /*---------------------------------------------------------------------------*/
 clock_time_t
 clock_time(void)
 {
-  return current_clock;
+  /* Return ticks since boot, scaled by CLOCK_CONF_SECOND */
+  /* esp_timer_get_time() returns microseconds */
+  uint64_t us_since_boot = esp_timer_get_time() - boot_us;
+  return (clock_time_t)((us_since_boot * CLOCK_CONF_SECOND) / 1000000ULL);
 }
 /*---------------------------------------------------------------------------*/
 unsigned long
 clock_seconds(void)
 {
-  return current_seconds;
+  /* Return seconds since boot */
+  return (unsigned long)((esp_timer_get_time() - boot_us) / 1000000ULL);
 }
 /*---------------------------------------------------------------------------*/
 void
 clock_wait(clock_time_t t)
 {
-  clock_time_t start;
-  start = clock_time();
+  clock_time_t start = clock_time();
   while(clock_time() - start < t) {
+    /* Yield to FreeRTOS */
     vTaskDelay(1);
   }
 }
@@ -129,7 +93,11 @@ clock_wait(clock_time_t t)
 void
 clock_delay_usec(uint16_t dt)
 {
-  esp_rom_delay_us(dt);
+  /* Busy-wait for precise microsecond delays */
+  uint64_t target = esp_timer_get_time() + dt;
+  while(esp_timer_get_time() < target) {
+    /* Busy loop */
+  }
 }
 /*---------------------------------------------------------------------------*/
 /**
