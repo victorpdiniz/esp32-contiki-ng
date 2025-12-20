@@ -1,16 +1,10 @@
 /**
- * WiFi UDP Sender - IPv4 Version (Contiki-based)
- * Uses Contiki processes with wifi-manager and udp-manager HAL
+ * WiFi UDP Sender - Contiki-NG Process
  */
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "contiki.h"
 #include "sys/log.h"
 #include "sys/etimer.h"
-#include "sys/process.h"
 
 #include "wifi-manager.h"
 #include "udp-manager.h"
@@ -18,16 +12,12 @@
 #define LOG_MODULE "Sender"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-/* WiFi Configuration */
 #define WIFI_SSID "DiscoveryNet_Andreia"
 #define WIFI_PASSWORD "cipc@es01"
-
-/* Network Configuration */
-#define RECEIVER_IP "10.0.0.107"
+#define RECEIVER_IP "10.0.0.108"
 #define UDP_PORT 5678
 #define SEND_INTERVAL (5 * CLOCK_SECOND)
 
-/* Message structure - must match receiver */
 typedef struct {
   uint32_t seq_num;
   uint32_t timestamp;
@@ -37,53 +27,42 @@ typedef struct {
   char message[64];
 } sensor_data_t;
 
-/* Global state */
-static int wifi_connected = 0;
-static udp_connection_t udp_conn;
-static uint32_t receiver_addr;
-static uint32_t seq_num = 0;
-
 /*---------------------------------------------------------------------------*/
-/* Sender Process */
-/*---------------------------------------------------------------------------*/
-PROCESS(udp_sender_process, "UDP Sender Process");
+PROCESS(udp_sender_process, "UDP Sender");
 AUTOSTART_PROCESSES(&udp_sender_process);
 
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_sender_process, ev, data)
 {
-  static struct etimer send_timer;
-  static struct etimer wifi_timer;
-  sensor_data_t sensor_msg;
-  
+  static struct etimer send_timer, wifi_timer;
+  static udp_connection_t udp_conn;
+  static uint32_t receiver_addr;
+  static uint32_t seq_num = 0;
+  static int wifi_connected = 0;
+  sensor_data_t msg;
+  int bytes_sent;
+
   PROCESS_BEGIN();
 
   LOG_INFO("UDP Sender starting\n");
   
-  /* Connect to WiFi */
-  if(wifi_manager_connect(WIFI_SSID, WIFI_PASSWORD) < 0) {
-    LOG_ERR("Failed to connect to WiFi\n");
-  }
-  
-  /* Parse receiver IP address */
+  wifi_manager_connect(WIFI_SSID, WIFI_PASSWORD);
   receiver_addr = udp_ip4addr_from_string(RECEIVER_IP);
+  
   if(receiver_addr == 0) {
     LOG_ERR("Invalid receiver IP: %s\n", RECEIVER_IP);
     PROCESS_EXIT();
   }
   
-  /* Wait for WiFi to be ready */
-  LOG_INFO("Waiting for WiFi connection...\n");
+  /* Wait for WiFi connection */
   etimer_set(&wifi_timer, 2 * CLOCK_SECOND);
   
   while(!wifi_connected) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&wifi_timer));
     etimer_reset(&wifi_timer);
     
-    wifi_status_t status = wifi_manager_get_status();
-    if(status == WIFI_STATUS_CONNECTED) {
+    if(wifi_manager_get_status() == WIFI_STATUS_CONNECTED) {
       wifi_connected = 1;
-      
       wifi_info_t info;
       if(wifi_manager_get_info(&info) == 0) {
         char ip_str[16];
@@ -93,51 +72,36 @@ PROCESS_THREAD(udp_sender_process, ev, data)
     }
   }
   
-  /* Register UDP socket for sending */
   if(udp_register(&udp_conn, 0, NULL, 0, NULL) < 0) {
-    LOG_ERR("Failed to register UDP connection\n");
+    LOG_ERR("UDP register failed\n");
     PROCESS_EXIT();
   }
   
-  char receiver_str[16];
-  udp_ip4addr_to_string(receiver_addr, receiver_str);
-  LOG_INFO("UDP sender registered, target: %s:%u\n", receiver_str, UDP_PORT);
-  
-  /* Start transmission timer */
   etimer_set(&send_timer, SEND_INTERVAL);
   
-  /* Main event loop */
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&send_timer));
     etimer_reset(&send_timer);
     
-    /* Prepare sensor data */
     seq_num++;
-    sensor_msg.seq_num = seq_num;
-    sensor_msg.timestamp = clock_seconds();
+    msg.seq_num = seq_num;
+    msg.timestamp = clock_seconds();
+    msg.temperature = 20.0f + (seq_num % 10);
+    msg.humidity = 50.0f + (seq_num % 20);
     
-    /* Simulate sensor readings */
-    sensor_msg.temperature = 20.0f + (seq_num % 10);
-    sensor_msg.humidity = 50.0f + (seq_num % 20);
+    strncpy(msg.device_id, "ESP32-S3-01", sizeof(msg.device_id) - 1);
+    snprintf(msg.message, sizeof(msg.message), "Packet #%lu", seq_num);
     
-    strncpy(sensor_msg.device_id, "ESP32-S3-01", sizeof(sensor_msg.device_id) - 1);
-    sensor_msg.device_id[sizeof(sensor_msg.device_id) - 1] = '\0';
+    bytes_sent = udp_send_data(&udp_conn, &msg, sizeof(msg), &receiver_addr, UDP_PORT);
     
-    snprintf(sensor_msg.message, sizeof(sensor_msg.message), "Packet #%lu", seq_num);
-    
-    /* Send data */
-    int bytes_sent = udp_send_data(&udp_conn, &sensor_msg, sizeof(sensor_msg),
-                                   &receiver_addr, UDP_PORT);
-    
-    if(bytes_sent < 0) {
-      LOG_WARN("Send failed\n");
-    } else {
+    if(bytes_sent > 0) {
       LOG_INFO("TX [%lu]: T=%.1f H=%.1f (%d bytes)\n",
-               seq_num, sensor_msg.temperature, sensor_msg.humidity, bytes_sent);
+               seq_num, msg.temperature, msg.humidity, bytes_sent);
     }
   }
 
   PROCESS_END();
 }
+
 
 
